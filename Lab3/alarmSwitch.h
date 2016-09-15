@@ -1,0 +1,5 @@
+
+
+void alarmSwitchInit(void);
+
+
