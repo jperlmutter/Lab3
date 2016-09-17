@@ -74,10 +74,17 @@ void display_Alarm(void){
 	}
 }
 
-void set_Alarm(){
+void set_Alarm_Init(){
 	DisableInterrupts();
 	display_Alarm();
-	while(alarm_Set==0){
+	alarm_Minutes=0;
+	alarm_Hours=0;
+}
+
+void set_Alarm(){
+	set_Alarm_Init();
+	uint8_t set=0;
+	while(set==0){
 		int test = GPIO_PORTE_DATA_R&0x08;
 		if((test)==0x08){													//if PE3 (add) is pressed then minutes will be incremented
 			alarm_Minutes=(alarm_Minutes+1)%60;
