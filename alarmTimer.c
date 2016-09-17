@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include "alarmTimer.h"
 #include "../inc/tm4c123gh6pm.h"
+#include "LCDAlarm.h"
 
 void DisableInterrupts(void); // Disable interrupts
 //Global variables
-
+uint32_t centiseconds = 0;
 uint16_t seconds=0;
 uint16_t minutes=0;
 uint16_t hours=0;
@@ -26,16 +27,25 @@ void Timer0A_Init100HzInt(void){
   // **** interrupt initialization ****// Timer0A=priority 2
   NVIC_PRI4_R = (NVIC_PRI4_R&0x00FFFFFF)|0x40000000; // top 3 bits
   NVIC_EN0_R |= 1<<19;              // enable interrupt 19 in NVIC
+	
 }
 
 void Timer0A_Handler(void){
-	seconds=(seconds+1)%60;
-	if(seconds==0){										//if seconds is zero then a minute has occured and minutes needs to be incremented
-		minutes=(minutes+1)%60;
-		if(minutes==0){									//if minutes has rolled over then increment hours
-			hours=(hours+1)%24;
+	TIMER0_ICR_R = TIMER_ICR_TATOCINT;
+	
+	centiseconds =(centiseconds+1)%100;
+	if(centiseconds == 0){
+		clearLCD();
+		seconds=(seconds+1)%60;
+		drawSecondHand(seconds);
+		if(seconds==0){										//if seconds is zero then a minute has occured and minutes needs to be incremented
+			minutes=(minutes+1)%60;
+			if(minutes==0){									//if minutes has rolled over then increment hours
+				hours=(hours+1)%24;
+			}
 		}
 	}
+	
 }
 
 /*void Timer1_Init(void){
