@@ -35,6 +35,10 @@ int32_t static dimensionalData[4]; // Used to create a surface which will be map
 
 int8_t secondX[60];
 int8_t secondY[60];
+int8_t minuteX[60];
+int8_t minuteY[60];
+int8_t hourX[60];
+int8_t hourY[60];
 
 void ST7735_XYplotInit(char *title, int32_t minX, int32_t maxX, int32_t minY, int32_t maxY){
 	ST7735_FillScreen(ST7735_BLACK); //BLACK 
@@ -70,48 +74,62 @@ void ST7735_XYplot(uint32_t num, int32_t bufX[], int32_t bufY[]){
 }
 
 
-void ST7735_drawline(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2){  //function that is used to draw a line with a slope on the LCD
+void ST7735_drawline(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color){  //function that is used to draw a line with a slope on the LCD
 	float slope;
 	float dy = (y1 - y2); float dx = (x2 - x1);
 	if(dx > 0 && dy != 0){
 		slope = dy/dx;
 		for(int x = x1; x < x2; x++){
-			ST7735_DrawPixel(x, (int)(slope*(x1 - x)+ y1), ST7735_WHITE);
+			ST7735_DrawPixel(x, (int)(slope*(x1 - x)+ y1), color);
 		}
-		for(int y = y2; y < y1; y++){
-			ST7735_DrawPixel((int)((y1-y)/slope)+ x1, y, ST7735_WHITE);
+		if(y1 > y2){//dy>0
+			for(int y = y2; y < y1; y++){
+				ST7735_DrawPixel((int)((y1-y)/slope)+ x1, y, color);
+			}
+		}
+		if(y2 > y1){
+			for(int y = y1; y < y2; y++){
+				ST7735_DrawPixel((int)((y2-y)/slope)+ x2, y, color);
+			}
 		}
 	}
 	if(dx < 0 && dy != 0){
 		slope = dy/dx;
 		for(int x = x2; x < x1; x++){
-			ST7735_DrawPixel(x, (int)(slope*(x2 - x)+ y2), ST7735_WHITE);
+			ST7735_DrawPixel(x, (int)(slope*(x2 - x)+ y2), color);
 		}
-		for(int y = y1; y < y2; y++){
-			ST7735_DrawPixel((int)((y2-y)/slope)+ x2, y, ST7735_WHITE);
+		if(y1 > y2){//dy>0
+			for(int y = y2; y < y1; y++){
+				ST7735_DrawPixel((int)((y1-y)/slope)+ x1, y, color);
+			}
+		}
+		if(y2 > y1){
+			for(int y = y1; y < y2; y++){
+				ST7735_DrawPixel((int)((y2-y)/slope)+ x2, y, color);
+			}
 		}
 	}
 	if(dx == 0 && dy != 0){
 		if(y1 > y2){
 			for(int y = y2; y < y1; y++){
-			ST7735_DrawPixel(x1, y, ST7735_WHITE);
+			ST7735_DrawPixel(x1, y, color);
 			}
 		}
 		if(y2 > y1){
 			for(int y = y1; y < y2; y++){
-			ST7735_DrawPixel(x1, y, ST7735_WHITE);
+			ST7735_DrawPixel(x1, y, color);
 			}
 		}
 	}
 	if(dx != 0 && dy == 0){
 		if(x1 > x2){
 			for(int x = x2; x < y1; x++){
-			ST7735_DrawPixel(x, y1, ST7735_WHITE);
+			ST7735_DrawPixel(x, y1, color);
 			}
 		}
 		if(x2 > x1){
 			for(int x = x1; x < x2; x++){
-			ST7735_DrawPixel(x, y1, ST7735_WHITE);
+			ST7735_DrawPixel(x, y1, color);
 			}
 		}
 	}
@@ -123,21 +141,570 @@ void clearLCD(void){
 	ST7735_FillRect(22, 44, 83, 39, ST7735_BLACK);
 }
 
-void drawSecondHand(int sec)
+void drawDigital(int sec, int min, int hour)
 {
-	ST7735_drawline(63, 63, secondX[sec], secondY[sec]);
+	
+	//min01
+	int digit1 = sec%10;
+	
+	if(digit1 == 1 || digit1 == 2 || digit1 == 3 || digit1 == 4 || digit1 == 7 || digit1 == 8|| digit1 == 9 || digit1 == 0){
+		ST7735_DrawFastVLine(108,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(107,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(106,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(108,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(107,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(106,135,7, ST7735_BLACK);
+	}
+	if(digit1 == 1 || digit1 == 3 || digit1 == 4 || digit1 == 5 || digit1 == 6 || digit1 == 7 || digit1 == 8 || digit1 == 9 || digit1 == 0 ){
+		ST7735_DrawFastVLine(108,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(107,146,9, ST7735_WHITE);// bottom right
+		ST7735_DrawFastVLine(106,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(108,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(107,146,9, ST7735_BLACK);// bottom right
+		ST7735_DrawFastVLine(106,147,7, ST7735_BLACK);
+	}
+	if(digit1 == 2 || digit1 == 3 || digit1 == 4 || digit1 == 5 || digit1 == 6 || digit1 == 8 || digit1 == 9){
+		ST7735_DrawFastHLine(97,143,9, ST7735_WHITE);
+		ST7735_DrawFastHLine(96,144,11, ST7735_WHITE); //middle
+		ST7735_DrawFastHLine(97,145,9, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(97,143,9, ST7735_BLACK);
+		ST7735_DrawFastHLine(96,144,11, ST7735_BLACK); //middle
+		ST7735_DrawFastHLine(97,145,9, ST7735_BLACK);
+	}
+	if(digit1 == 2 || digit1 == 3 || digit1 == 5 || digit1 == 6 || digit1 == 7|| digit1 == 8 || digit1 == 9 || digit1 == 0){
+		ST7735_DrawFastHLine(96,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(97,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(98,134,7, ST7735_WHITE);	
+	}
+	else{
+		ST7735_DrawFastHLine(96,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(97,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(98,134,7, ST7735_BLACK);
+	}
+	if(digit1 == 2 || digit1 == 3 || digit1 == 5 || digit1 == 6 || digit1 == 8 || digit1 == 9 || digit1 == 0){
+		ST7735_DrawFastHLine(96,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(97,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(98,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(96,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(97,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(98,154,7, ST7735_BLACK);
+
+	}
+	if(digit1 == 4 || digit1 == 5 || digit1 == 6 || digit1 == 8 || digit1 == 9 || digit1 == 0){
+		ST7735_DrawFastVLine(94,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(95,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(96,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(94,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(95,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(96,135,7, ST7735_BLACK);
+	}
+	if(digit1 == 2 || digit1 == 6 || digit1 == 8 || digit1 == 0){
+		ST7735_DrawFastVLine(94,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(95,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(96,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(94,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(95,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(96,147,7, ST7735_BLACK);
+	}		
+	
+	
+	int digit2 = sec/10;
+	if(digit2 == 1 || digit2 == 2 || digit2 == 3 || digit2 == 4 || digit2 == 0){
+		ST7735_DrawFastVLine(91,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(90,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(89,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(91,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(90,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(89,135,7, ST7735_BLACK);
+	}
+	if(digit2 == 1 || digit2 == 3 || digit2 == 4 || digit2 == 5 || digit2 == 0 ){
+		ST7735_DrawFastVLine(91,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(90,146,9, ST7735_WHITE);// bottom right
+		ST7735_DrawFastVLine(89,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(91,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(90,146,9, ST7735_BLACK);// bottom right
+		ST7735_DrawFastVLine(89,147,7, ST7735_BLACK);
+	}
+	if(digit2 == 2 || digit2 == 3 || digit2 == 4 || digit2 == 5){
+		ST7735_DrawFastHLine(80,143,9, ST7735_WHITE);
+		ST7735_DrawFastHLine(79,144,11, ST7735_WHITE); //middle
+		ST7735_DrawFastHLine(80,145,9, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(80,143,9, ST7735_BLACK);
+		ST7735_DrawFastHLine(79,144,11, ST7735_BLACK); //middle
+		ST7735_DrawFastHLine(80,145,9, ST7735_BLACK);
+	}
+	if(digit2 == 2 || digit2 == 3 || digit2 == 5 || digit2 == 0){
+		ST7735_DrawFastHLine(79,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(80,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(81,134,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(79,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(80,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(81,134,7, ST7735_BLACK);
+	}
+	if(digit2 == 2 || digit2 == 3 || digit2 == 5 || digit2 == 0){
+		ST7735_DrawFastHLine(79,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(80,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(81,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(79,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(80,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(81,154,7, ST7735_BLACK);
+
+	}
+	if(digit2 == 4 || digit2 == 5 || digit2 == 0){
+		ST7735_DrawFastVLine(77,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(78,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(79,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(77,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(78,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(79,135,7, ST7735_BLACK);
+	}
+	if(digit2 == 2 || digit2 == 0){
+		ST7735_DrawFastVLine(77,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(78,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(79,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(77,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(78,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(79,147,7, ST7735_BLACK);
+	}
+	
+	
+	
+	ST7735_FillRect(73, 138, 3, 3, ST7735_WHITE); //colon
+	ST7735_FillRect(73, 148, 3, 3, ST7735_WHITE); //colon
+	
+	
+	int digit3 = min%10;
+	
+	//hour 0x01
+	if(digit3 == 1 || digit3 == 2 || digit3 == 3 || digit3 == 4 || digit3 == 7 || digit3 == 8|| digit3 == 9 || digit3 == 0){
+		ST7735_DrawFastVLine(71,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(70,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(69,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(71,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(70,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(69,135,7, ST7735_BLACK);
+	}
+	if(digit3 == 1 || digit3 == 3 || digit3 == 4 || digit3 == 5 || digit3 == 6 || digit3 == 7 || digit3 == 8 || digit3 == 9 || digit3 == 0 ){
+			ST7735_DrawFastVLine(71,145,11, ST7735_WHITE);
+			ST7735_DrawFastVLine(70,146,9, ST7735_WHITE);// bottom right
+			ST7735_DrawFastVLine(69,147,7, ST7735_WHITE);
+	}
+	else{
+			ST7735_DrawFastVLine(71,145,11, ST7735_BLACK);
+			ST7735_DrawFastVLine(70,146,9, ST7735_BLACK);// bottom right
+			ST7735_DrawFastVLine(69,147,7, ST7735_BLACK);
+	}
+	if(digit3 == 2 || digit3 == 3 || digit3 == 4 || digit3 == 5 || digit3 == 6 || digit3 == 8 || digit3 == 9){
+		ST7735_DrawFastHLine(60,143,9, ST7735_WHITE);
+		ST7735_DrawFastHLine(59,144,11, ST7735_WHITE); //middle
+		ST7735_DrawFastHLine(60,145,9, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(60,143,9, ST7735_BLACK);
+		ST7735_DrawFastHLine(59,144,11, ST7735_BLACK); //middle
+		ST7735_DrawFastHLine(60,145,9, ST7735_BLACK);
+	}
+	if(digit3 == 2 || digit3 == 3 || digit3 == 5 || digit3 == 6 || digit3 == 7|| digit3 == 8 || digit3 == 9 || digit3 == 0){
+		ST7735_DrawFastHLine(59,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(60,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(61,134,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(59,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(60,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(61,134,7, ST7735_BLACK);
+	}
+	if(digit3 == 2 || digit3 == 3 || digit3 == 5 || digit3 == 6 || digit3 == 8 || digit3 == 9 || digit3 == 0){
+		ST7735_DrawFastHLine(59,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(60,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(61,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(59,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(60,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(61,154,7, ST7735_BLACK);
+	}
+	if(digit3 == 4 || digit3 == 5 || digit3 == 6 || digit3 == 8 || digit3 == 9 || digit3 == 0){
+		ST7735_DrawFastVLine(57,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(58,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(59,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(57,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(58,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(59,135,7, ST7735_BLACK);
+	}
+	if(digit3 == 2 || digit3 == 6 || digit3 == 8 || digit3 == 0){
+		ST7735_DrawFastVLine(57,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(58,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(59,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(57,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(58,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(59,147,7, ST7735_BLACK);
+	}		
+	
+	
+	int digit4 = min/10;
+	
+	
+	if(digit4 == 1 || digit4 == 2 || digit4 == 3 || digit4 == 4 || digit4 == 0){
+		ST7735_DrawFastVLine(54,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(53,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(52,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(54,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(53,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(52,135,7, ST7735_BLACK);
+	}
+	if(digit4 == 1 || digit4 == 3 || digit4 == 4 || digit4 == 5 || digit4 == 0 ){
+		ST7735_DrawFastVLine(54,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(53,146,9, ST7735_WHITE);// bottom right
+		ST7735_DrawFastVLine(52,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(54,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(53,146,9, ST7735_BLACK);// bottom right
+		ST7735_DrawFastVLine(52,147,7, ST7735_BLACK);
+	}
+	if(digit4 == 2 || digit4 == 3 || digit4 == 4 || digit4 == 5){
+		ST7735_DrawFastHLine(43,143,9, ST7735_WHITE);
+		ST7735_DrawFastHLine(42,144,11, ST7735_WHITE); //middle
+		ST7735_DrawFastHLine(43,145,9, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(43,143,9, ST7735_BLACK);
+		ST7735_DrawFastHLine(42,144,11, ST7735_BLACK); //middle
+		ST7735_DrawFastHLine(43,145,9, ST7735_BLACK);
+	}
+	if(digit4 == 2 || digit4 == 3 || digit4 == 5 || digit4 == 0){
+		ST7735_DrawFastHLine(42,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(43,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(44,134,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(42,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(43,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(44,134,7, ST7735_BLACK);
+	}
+	if(digit4 == 2 || digit4 == 3 || digit4 == 5 || digit4 == 0){
+		ST7735_DrawFastHLine(42,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(43,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(44,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(42,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(43,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(44,154,7, ST7735_BLACK);
+	}
+	if(digit4 == 4 || digit4 == 5 || digit4 == 0){
+		ST7735_DrawFastVLine(40,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(41,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(42,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(40,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(41,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(42,135,7, ST7735_BLACK);
+	}
+	if(digit4 == 2 || digit4 == 0){
+		ST7735_DrawFastVLine(40,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(41,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(42,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(40,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(41,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(42,147,7, ST7735_BLACK);
+	}
+	ST7735_FillRect(36, 138, 3, 3, ST7735_WHITE); //colon
+	ST7735_FillRect(36, 148, 3, 3, ST7735_WHITE); //colon
+	
+	int digit5 = (hour/5)%10;
+	if(hour/5 == 0) {digit5 = 2;}
+	//hour 0x01
+	if(digit5 == 1 || digit5 == 2 || digit5 == 3 || digit5 == 4 || digit5 == 7 || digit5 == 8|| digit5 == 9 || digit5 == 0){
+		ST7735_DrawFastVLine(34,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(33,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(32,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(34,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(33,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(32,135,7, ST7735_BLACK);
+	}
+	if(digit5 == 1 || digit5 == 3 || digit5 == 4 || digit5 == 5 || digit5 == 6 || digit5 == 7 || digit5 == 8 || digit5 == 9 || digit5 == 0 ){
+			ST7735_DrawFastVLine(34,145,11, ST7735_WHITE);
+			ST7735_DrawFastVLine(33,146,9, ST7735_WHITE);// bottom right
+			ST7735_DrawFastVLine(32,147,7, ST7735_WHITE);
+	}
+	else{
+			ST7735_DrawFastVLine(34,145,11, ST7735_BLACK);
+			ST7735_DrawFastVLine(33,146,9, ST7735_BLACK);// bottom right
+			ST7735_DrawFastVLine(32,147,7, ST7735_BLACK);
+	}
+	if(digit5 == 2 || digit5 == 3 || digit5 == 4 || digit5 == 5 || digit5 == 6 || digit5 == 8 || digit5 == 9){
+		ST7735_DrawFastHLine(23,143,9, ST7735_WHITE);
+		ST7735_DrawFastHLine(22,144,11, ST7735_WHITE); //middle
+		ST7735_DrawFastHLine(23,145,9, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(23,143,9, ST7735_BLACK);
+		ST7735_DrawFastHLine(22,144,11, ST7735_BLACK); //middle
+		ST7735_DrawFastHLine(23,145,9, ST7735_BLACK);
+	}
+	if(digit5 == 2 || digit5 == 3 || digit5 == 5 || digit5 == 6 || digit5 == 7|| digit5 == 8 || digit5 == 9 || digit5 == 0){
+		ST7735_DrawFastHLine(22,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(23,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(24,134,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(22,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(23,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(24,134,7, ST7735_BLACK);
+	}
+	if(digit5 == 2 || digit5 == 3 || digit5 == 5 || digit5 == 6 || digit5 == 8 || digit5 == 9 || digit5 == 0){
+		ST7735_DrawFastHLine(22,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(23,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(24,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(22,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(23,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(24,154,7, ST7735_BLACK);
+	}
+	if(digit5 == 4 || digit5 == 5 || digit5 == 6 || digit5 == 8 || digit5 == 9 || digit5 == 0){
+		ST7735_DrawFastVLine(20,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(21,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(22,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(20,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(21,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(22,135,7, ST7735_BLACK);
+	}
+	if(digit5 == 2 || digit5 == 6 || digit5 == 8 || digit5 == 0){
+		ST7735_DrawFastVLine(20,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(21,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(22,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(20,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(21,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(22,147,7, ST7735_BLACK);
+	}		
+	
+	
+	int digit6 = hour/50;
+	
+	if(hour/5 == 0){digit6 = 1;}
+	
+	if(digit6 == 1 || digit6 == 0){
+		ST7735_DrawFastVLine(17,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(16,134,9, ST7735_WHITE); //top right
+		ST7735_DrawFastVLine(15,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(17,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(16,134,9, ST7735_BLACK); //top right
+		ST7735_DrawFastVLine(15,135,7, ST7735_BLACK);
+	}
+	if(digit6 == 1 || digit6 == 0 ){
+		ST7735_DrawFastVLine(17,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(16,146,9, ST7735_WHITE);// bottom right
+		ST7735_DrawFastVLine(15,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(17,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(16,146,9, ST7735_BLACK);// bottom right
+		ST7735_DrawFastVLine(15,147,7, ST7735_BLACK);
+	}
+
+	if(digit6 == 0){
+		ST7735_DrawFastHLine(5,132,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(6,133,9, ST7735_WHITE); //top
+		ST7735_DrawFastHLine(7,134,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(5,132,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(6,133,9, ST7735_BLACK); //top
+		ST7735_DrawFastHLine(7,134,7, ST7735_BLACK);
+	}
+	if(digit6 == 0){
+		ST7735_DrawFastHLine(5,156,11, ST7735_WHITE);
+		ST7735_DrawFastHLine(6,155,9, ST7735_WHITE); //bottom
+		ST7735_DrawFastHLine(7,154,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastHLine(5,156,11, ST7735_BLACK);
+		ST7735_DrawFastHLine(6,155,9, ST7735_BLACK); //bottom
+		ST7735_DrawFastHLine(7,154,7, ST7735_BLACK);
+	}
+	if(digit6 == 0){
+		ST7735_DrawFastVLine(3,133,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(4,134,9, ST7735_WHITE); //top left
+		ST7735_DrawFastVLine(5,135,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(3,133,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(4,134,9, ST7735_BLACK); //top left
+		ST7735_DrawFastVLine(5,135,7, ST7735_BLACK);
+	}
+	if(digit6 == 0){
+		ST7735_DrawFastVLine(3,145,11, ST7735_WHITE);
+		ST7735_DrawFastVLine(4,146,9, ST7735_WHITE); //bottom left
+		ST7735_DrawFastVLine(5,147,7, ST7735_WHITE);
+	}
+	else{
+		ST7735_DrawFastVLine(3,145,11, ST7735_BLACK);
+		ST7735_DrawFastVLine(4,146,9, ST7735_BLACK); //bottom left
+		ST7735_DrawFastVLine(5,147,7, ST7735_BLACK);
+	}
 }
+
+
+void drawHands(int sec, int min, int hour)
+{
+	ST7735_drawline(63, 63, hourX[hour], hourY[hour], ST7735_WHITE);
+	
+	ST7735_drawline(62, 63, hourX[hour]-1, hourY[hour], ST7735_WHITE);
+	ST7735_drawline(64, 63, hourX[hour]+1, hourY[hour], ST7735_WHITE);
+	ST7735_drawline(63, 62, hourX[hour], hourY[hour]-1, ST7735_WHITE);
+	ST7735_drawline(63, 64, hourX[hour], hourY[hour]+1, ST7735_WHITE);
+	
+	ST7735_drawline(63, 63, secondX[sec], secondY[sec], ST7735_RED);
+	ST7735_drawline(63, 63, minuteX[min], minuteY[min], ST7735_WHITE);
+	
+}
+
 void initClockHands(void){
 	
 	for(int x = 0; x < 60; x++)
 	{
 		secondX[x] = (int)(35*sin(2*3.14159*x/60)) + 63;
 		secondY[x] = (int)(-35*cos(2*3.14159*x/60)) + 63;
+		minuteX[x] = (int)(34*sin(2*3.14159*x/60)) + 63;
+		minuteY[x] = (int)(-34*cos(2*3.14159*x/60)) + 63;
+		hourX[x] = (int)(22*sin(2*3.14159*x/60)) + 63;
+		hourY[x] = (int)(-22*cos(2*3.14159*x/60)) + 63;
 	}
-	ST7735_drawline(63, 63, secondX[40], secondY[40]);
+	
+	
+}
+uint8_t amOrpm = 1;
+uint16_t grayColor;
+
+void AMorPM(void){
+	grayColor = ST7735_Color565(169, 169, 169);
+	amOrpm = (amOrpm+1)%2;
+	
+	if(!amOrpm)
+	{
+		//AM
+	ST7735_DrawFastVLine(112,135,8, ST7735_YELLOW);
+	ST7735_DrawFastVLine(113,133,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(114,132,2, ST7735_YELLOW);
+	ST7735_DrawFastVLine(115,132,2, ST7735_YELLOW);
+	ST7735_DrawFastVLine(116,133,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(117,135,8, ST7735_YELLOW);
+	ST7735_DrawFastHLine(113,137,4, ST7735_YELLOW);
+
+	ST7735_DrawFastVLine(119,132,11, ST7735_YELLOW);
+	ST7735_DrawFastVLine(120,132,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(121,136,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(122,139,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(125,132,11, ST7735_YELLOW);
+	ST7735_DrawFastVLine(124,132,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(123,136,5, ST7735_YELLOW);
+	
+	//PM
+	ST7735_DrawFastVLine(112,146,11, grayColor);
+	ST7735_DrawFastHLine(113,146,4, grayColor);
+	ST7735_DrawFastVLine(116,146,2, grayColor);
+	ST7735_DrawFastVLine(117,147,4, grayColor);
+	ST7735_DrawFastVLine(116,150,2, grayColor);
+	ST7735_DrawFastHLine(113,151,4, grayColor);
+	
+	ST7735_DrawFastVLine(119,146,11, grayColor);
+	ST7735_DrawFastVLine(120,146,5, grayColor);
+	ST7735_DrawFastVLine(121,150,5, grayColor);
+	ST7735_DrawFastVLine(122,153,4, grayColor);
+	ST7735_DrawFastVLine(125,146,11, grayColor);
+	ST7735_DrawFastVLine(124,146,5, grayColor);
+	ST7735_DrawFastVLine(123,150,5, grayColor);
+	}
+	else
+	{
+		//AM
+	ST7735_DrawFastVLine(112,135,8, grayColor);
+	ST7735_DrawFastVLine(113,133,4, grayColor);
+	ST7735_DrawFastVLine(114,132,2, grayColor);
+	ST7735_DrawFastVLine(115,132,2, grayColor);
+	ST7735_DrawFastVLine(116,133,4, grayColor);
+	ST7735_DrawFastVLine(117,135,8, grayColor);
+	ST7735_DrawFastHLine(113,137,4, grayColor);
+
+	ST7735_DrawFastVLine(119,132,11, grayColor);
+	ST7735_DrawFastVLine(120,132,5, grayColor);
+	ST7735_DrawFastVLine(121,136,5, grayColor);
+	ST7735_DrawFastVLine(122,139,4, grayColor);
+	ST7735_DrawFastVLine(125,132,11, grayColor);
+	ST7735_DrawFastVLine(124,132,5, grayColor);
+	ST7735_DrawFastVLine(123,136,5, grayColor);
+	
+	//PM
+	ST7735_DrawFastVLine(112,146,11, ST7735_YELLOW);
+	ST7735_DrawFastHLine(113,146,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(116,146,2, ST7735_YELLOW);
+	ST7735_DrawFastVLine(117,147,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(116,150,2, ST7735_YELLOW);
+	ST7735_DrawFastHLine(113,151,4, ST7735_YELLOW);
+	
+	ST7735_DrawFastVLine(119,146,11, ST7735_YELLOW);
+	ST7735_DrawFastVLine(120,146,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(121,150,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(122,153,4, ST7735_YELLOW);
+	ST7735_DrawFastVLine(125,146,11, ST7735_YELLOW);
+	ST7735_DrawFastVLine(124,146,5, ST7735_YELLOW);
+	ST7735_DrawFastVLine(123,150,5, ST7735_YELLOW);
+	
+	}
+
+	
 }
 
 void initLCDAlarm(void){
+	
 	//Circle
 	ST7735_XYplotInit("Circle",-2500, 2500, -2500, 2500);
   ST7735_XYplot(180,(int32_t *)CircleXbuf,(int32_t *)CircleYbuf);
@@ -173,26 +740,26 @@ void initLCDAlarm(void){
 	ST7735_FillRect(90, 101, 2, 2, ST7735_WHITE);
 	
 	//Lines (center: 63, 63)
-	ST7735_drawline(86, 25, 90, 20);  //1
-	ST7735_drawline(85, 26, 89, 21); 
-	ST7735_drawline(101, 42, 105, 40); // 2
-	ST7735_drawline(100, 42, 105, 41); 
+	ST7735_drawline(86, 25, 90, 20, ST7735_WHITE);  //1
+	ST7735_drawline(85, 26, 89, 21, ST7735_WHITE); 
+	ST7735_drawline(101, 42, 105, 40, ST7735_WHITE); // 2
+	ST7735_drawline(100, 42, 105, 41, ST7735_WHITE); 
 	ST7735_DrawFastHLine(106,63,4, ST7735_WHITE); //3
-	ST7735_drawline( 101, 85, 105, 87); // 4
-	ST7735_drawline( 100, 84, 105, 88); //
-	ST7735_drawline( 84, 97, 88, 105); // 5
-	ST7735_drawline( 85, 98, 88, 106); // 
+	ST7735_drawline( 101, 85, 105, 87, ST7735_WHITE); // 4
+	ST7735_drawline( 100, 84, 105, 88, ST7735_WHITE); //
+	ST7735_drawline( 84, 97, 88, 105, ST7735_WHITE); // 5
+	ST7735_drawline( 85, 98, 88, 106, ST7735_WHITE); // 
 	ST7735_DrawFastVLine(63,105,4, ST7735_WHITE); //6
-	ST7735_drawline(40, 101, 43, 97); // 7
-	ST7735_drawline(39, 101, 42, 97);
+	ST7735_drawline(40, 101, 43, 97, ST7735_WHITE); // 7
+	ST7735_drawline(39, 101, 42, 97, ST7735_WHITE);
 	ST7735_DrawPixel(40,100, ST7735_WHITE); 
-	ST7735_drawline(23, 86, 27, 84); // 8 
-	ST7735_drawline(23, 85, 27, 84); 
+	ST7735_drawline(23, 86, 27, 84, ST7735_WHITE); // 8 
+	ST7735_drawline(23, 85, 27, 84, ST7735_WHITE); 
 	ST7735_DrawFastHLine(17,63,4, ST7735_WHITE); //9
-	ST7735_drawline( 22, 39, 27, 41); //10
-	ST7735_drawline( 22, 38, 27, 41); //
-	ST7735_drawline( 39, 20, 43, 27); // 11
-	ST7735_drawline( 39, 21, 42, 26); // 
+	ST7735_drawline( 22, 39, 27, 41, ST7735_WHITE); //10
+	ST7735_drawline( 22, 38, 27, 41, ST7735_WHITE); //
+	ST7735_drawline( 39, 20, 43, 27, ST7735_WHITE); // 11
+	ST7735_drawline( 39, 21, 42, 26, ST7735_WHITE); // 
 	ST7735_DrawFastVLine(63,16,4, ST7735_WHITE); //12
 	
 	//center; used in debugging clear function
@@ -292,4 +859,5 @@ void initLCDAlarm(void){
 	ST7735_DrawPixel(33,12, ST7735_BLACK);
 	
 	initClockHands();
+	AMorPM();
 }

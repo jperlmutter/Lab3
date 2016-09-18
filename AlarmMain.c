@@ -7,9 +7,7 @@
 #include "LCDAlarm.h"
 #include "alarmTimer.h"
 
-#define PE2   (*((volatile uint32_t *)0x4005C010))
-#define PE3   (*((volatile uint32_t *)0x4005C020))
-#define PE4   (*((volatile uint32_t *)0x4005C040))
+
 	void EnableInterrupts(void); 
 
 
@@ -23,9 +21,10 @@ int main(void){
 	alarmTimerInit();
 	EnableInterrupts();
   while(1){
-	//	if(GPIO_PORTE_DATA_R != 0)
-//{
-	//		ST7735_FillScreen(ST7735_WHITE);
-//}
+		if((GPIO_PORTE_DATA_R&0x04) == 0x04)
+		{
+			while((GPIO_PORTE_DATA_R&0x04) == 0x04){}
+				set_Alarm();
+		}
 	}
 }

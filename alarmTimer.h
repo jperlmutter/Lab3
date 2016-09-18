@@ -6,4 +6,3 @@ extern uint16_t minutes;
 extern uint16_t hours;
 
 void alarmTimerInit(void);
-
