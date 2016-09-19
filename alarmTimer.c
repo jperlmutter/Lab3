@@ -3,9 +3,10 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "LCDAlarm.h"
 #include "alarmSwitch.h"
-
+#include "ST7735.h"
 
 void DisableInterrupts(void); // Disable interrupts
+void DelayWait10ms(uint32_t n);
 //Global variables
 uint32_t centiseconds = 0;
 uint16_t seconds;
@@ -14,7 +15,7 @@ uint16_t hours;
 
 void Timer0A_Init100HzInt(uint16_t sec, uint16_t min, uint16_t hour){
   volatile uint32_t delay;
-  DisableInterrupts();
+ 
   // **** general initialization ****
   SYSCTL_RCGCTIMER_R |= 0x01;      // activate timer0
   delay = SYSCTL_RCGCTIMER_R;      // allow time to finish activating
@@ -77,12 +78,127 @@ void Timer0A_Handler(void){
 
 
 
-
+void set_Time(void)
+{
+	int digit = 1;
+	int tempseconds = seconds;
+	int tempminutes = minutes;
+	int temphours = hours;
+	
+	TIMER0_CTL_R &= ~TIMER_CTL_TAEN;
+	while(digit != 4){
+		hours/= 5;
+		if(digit == 1){ST7735_FillRect(0, 130, 37, 38, ST7735_BLACK);}
+		if(digit == 2){ST7735_FillRect(39, 130, 34, 38, ST7735_BLACK);}
+		if(digit == 3){ST7735_FillRect(77, 130, 34, 38, ST7735_BLACK);}
+		DelayWait10ms(50);
+		if((GPIO_PORTE_DATA_R&0x08)==0x08 && digit == 2){													//if PE3 (add) is pressed then minutes will be incremented
+			DelayWait10ms(2);
+			if((GPIO_PORTE_DATA_R&0x08) == 0x08) {
+			while((GPIO_PORTE_DATA_R&0x08) == 0x08) {DelayWait10ms(10);}
+			minutes=(minutes+1)%60;
+			if(minutes==0){
+				hours=(hours+1)%12;
+				if(hours == 0){
+					
+					AMorPM();
+					
+				}
+			}
+			
+		}
+	}
+		if((GPIO_PORTE_DATA_R&0x10)==0x10 && digit ==2){
+			DelayWait10ms(2);			
+			if((GPIO_PORTE_DATA_R&0x10) == 0x10) {
+				while((GPIO_PORTE_DATA_R&0x10) == 0x10) {DelayWait10ms(10);}			//if PE4 (minus) is pressed then minutes will be decremented
+				minutes-=1;
+				if(minutes== 0xFFFF){
+					
+					hours-=1;
+					if(hours== 0xFFFF){
+						hours=11;
+						AMorPM();
+						
+					}
+				minutes=59;
+				}
+			}
+		}
+		if((GPIO_PORTE_DATA_R&0x08)==0x08 && digit == 1){													//if PE3 (add) is pressed then minutes will be incremented
+			DelayWait10ms(2);
+			if((GPIO_PORTE_DATA_R&0x08) == 0x08) {
+			while((GPIO_PORTE_DATA_R&0x08) == 0x08) {DelayWait10ms(10);}
+			
+			
+				hours=(hours+1)%12;
+				if(hours == 0)
+				{
+					
+					AMorPM();
+				
+				}
+				
+			
+			
+		}
+	}
+		if((GPIO_PORTE_DATA_R&0x10)==0x10 && digit ==1){
+			DelayWait10ms(2);			
+			if((GPIO_PORTE_DATA_R&0x10) == 0x10) {
+			while((GPIO_PORTE_DATA_R&0x10) == 0x10) {DelayWait10ms(10);}			//if PE4 (minus) is pressed then minutes will be decremented
+			
+			
+				
+				hours-=1;
+				if(hours == 0xFFFF){
+					hours=11;
+					AMorPM();
+					
+				}
+				
+			}
+			
+		}
+		if((GPIO_PORTE_DATA_R&0x02)==0x02){
+			DelayWait10ms(2);			
+			if((GPIO_PORTE_DATA_R&0x02) == 0x02) {
+			while((GPIO_PORTE_DATA_R&0x02) == 0x02) {DelayWait10ms(10);}			//if PE4 (minus) is pressed then minutes will be decremented
+			digit++;
+				if(digit == 4)
+				{
+					
+				}
+			}
+		}
+		
+		if((GPIO_PORTE_DATA_R&0x04)==0x04){
+			DelayWait10ms(2);			
+			if((GPIO_PORTE_DATA_R&0x04) == 0x04) {
+			while((GPIO_PORTE_DATA_R&0x04) == 0x04) {DelayWait10ms(10);}			//if PE4 (minus) is pressed then minutes will be decremented
+			
+			digit = 4;
+			seconds  = tempseconds;
+			minutes = tempminutes;
+			hours = temphours;
+			}
+			
+		}
+		hours = hours*5 + minutes/12;
+		clearLCD();
+		drawHands(seconds, minutes, hours);
+	drawDigital(seconds, minutes, hours);
+	DelayWait10ms(50);
+	}
+	hours/=5;
+	Timer0A_Init100HzInt(seconds, minutes, hours);
+	
+}
 
 
 void alarmTimerInit(void){
 	
-	Timer0A_Init100HzInt(0, 32, 12);
+	Timer0A_Init100HzInt(0, 0, 0);
 	
 }
 
