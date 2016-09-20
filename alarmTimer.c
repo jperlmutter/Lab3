@@ -92,6 +92,47 @@ void set_Time(void)
 		if(digit == 2){ST7735_FillRect(39, 130, 34, 38, ST7735_BLACK);}
 		if(digit == 3){ST7735_FillRect(77, 130, 34, 38, ST7735_BLACK);}
 		DelayWait10ms(50);
+		if((GPIO_PORTE_DATA_R&0x08)==0x08 && digit == 3){													//if PE3 (add) is pressed then minutes will be incremented
+			DelayWait10ms(2);
+			if((GPIO_PORTE_DATA_R&0x08) == 0x08) {
+			while((GPIO_PORTE_DATA_R&0x08) == 0x08) {DelayWait10ms(10);}
+			seconds=(seconds+1)%60;
+			if(seconds == 0){
+			minutes=(minutes+1)%60;
+			if(minutes==0){
+				hours=(hours+1)%12;
+				if(hours == 0){
+					
+					AMorPM();
+					
+				}
+			}
+			
+		}
+	}
+	}
+		if((GPIO_PORTE_DATA_R&0x10)==0x10 && digit ==3){
+			DelayWait10ms(2);			
+			if((GPIO_PORTE_DATA_R&0x10) == 0x10) {
+				while((GPIO_PORTE_DATA_R&0x10) == 0x10) {DelayWait10ms(10);}			//if PE4 (minus) is pressed then minutes will be decremented
+				
+				seconds-=1;
+				if(seconds == 0xFFFF){
+				
+				minutes-=1;
+				if(minutes== 0xFFFF){
+					
+					hours-=1;
+					if(hours== 0xFFFF){
+						hours=11;
+						AMorPM();
+						
+					}
+				minutes=59;
+				}
+				seconds = 59;
+			}}
+		}
 		if((GPIO_PORTE_DATA_R&0x08)==0x08 && digit == 2){													//if PE3 (add) is pressed then minutes will be incremented
 			DelayWait10ms(2);
 			if((GPIO_PORTE_DATA_R&0x08) == 0x08) {
