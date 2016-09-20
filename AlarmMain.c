@@ -24,9 +24,24 @@ int main(void){
 	DisableInterrupts();
 	alarmTimerInit();
 	EnableInterrupts();
-
+	
+	SYSCTL_RCGCGPIO_R |= 0x20;        // 1) activate clock for Port E
+  while((SYSCTL_PRGPIO_R&0x20)==0){}; // allow time for clock to start
+                                    // 2) no need to unlock PF2, PF4
+  
+  GPIO_PORTF_AMSEL_R &= 0;      // 4) disable analog function on PF2, PF4
+	//GPIO_PORTE_PCTL_R = (GPIO_PORTE_PCTL_R&0xFFF0000F)+0x00000000;// configure PF2 as GPIO
+	GPIO_PORTF_PCTL_R &= ~0x000F0000;
+  //GPIO_PORTE_PDR_R |= 0x1E;         // 5) pullup for PF4
+  GPIO_PORTF_DIR_R |= 0x10;         // 5) set direction to output
+  GPIO_PORTF_AFSEL_R &= ~0x10;      // 6) regular port function
+	//GPIO_PORTF_PUR_R |= 0x1E;
+  GPIO_PORTF_DEN_R |= 0x10;         // 7) enable digital port
+	GPIO_PORTF_DATA_R |=0x10;
+		
   while(1){
-		GPIO_PORTE_DATA_R |= 0xE0;
+		alarm();
+		//GPIO_PORTE_DATA_R |= 0xE0;
 		if((GPIO_PORTE_DATA_R&0x04) == 0x04)
 		{
 			
@@ -48,12 +63,7 @@ int main(void){
 			
 				set_Time();
 			}
-		}
-		if(alarm_Set==1){
-			alarm_Settings();
-		}
-		else{
-			GPIO_PORTE_DATA_R &=0xDF;
+				
 		}
 	}
 }
