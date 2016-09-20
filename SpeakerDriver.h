@@ -7,3 +7,4 @@ void alarm(void);
 
 void optionsBing(void);
 
+void alarm_Settings(void);

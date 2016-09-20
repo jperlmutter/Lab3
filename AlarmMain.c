@@ -50,9 +50,7 @@ int main(void){
 			}
 		}
 		if(alarm_Set==1){
-			if(alarm_Minutes==minutes && alarm_Hours ==hours && amorpm==amOrpm){
-				alarm();
-			}
+			alarm_Settings();
 		}
 		else{
 			GPIO_PORTE_DATA_R &=0xDF;

@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "../inc/tm4c123gh6pm.h"
-
+#include "alarmSwitch.h"
+#include "LCDAlarm.h"
+#include "alarmTimer.h"
 
 void speakerInit(void){
 	SYSCTL_RCGCGPIO_R |= 0x10;        // 1) activate clock for Port E
@@ -21,6 +23,31 @@ void speakerInit(void){
 
 void alarm(void){
 	GPIO_PORTE_DATA_R^=0x20;
+}
+
+void alarm_Settings(void){
+	if(alarm_Minutes==minutes && alarm_Hours ==hours && amorpm==amOrpm){
+		alarm();
+		int check=GPIO_PORTE_DATA_R;
+		if((check&=0x02) ==0x02){
+			if(alarm_Minutes+5>=60){
+				alarm_Minutes=(alarm_Minutes+5)%5;
+				alarm_Hours+=1;
+				if(alarm_Hours%12==0){
+					alarm_Hours=(alarm_Hours+1)%12;
+					amorpm^=1;
+				}
+			}
+		else{
+			alarm_Minutes+=1;
+		}
+		}
+		check=GPIO_PORTE_DATA_R;
+		if((check&=0x08)==0x08 || (check&0x10)==0x10){
+			alarm_Set=0;
+		}
+	}
+	return;
 }
 
 void optionsBing(void){
