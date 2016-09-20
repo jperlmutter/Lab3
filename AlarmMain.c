@@ -24,6 +24,7 @@ int main(void){
 	DisableInterrupts();
 	alarmTimerInit();
 	EnableInterrupts();
+	
   while(1){
 		GPIO_PORTE_DATA_R |= 0xE0;
 		if((GPIO_PORTE_DATA_R&0x04) == 0x04)
@@ -47,7 +48,11 @@ int main(void){
 			
 				set_Time();
 			}
-				
+		}
+		if(alarm_Set==1){
+			if(alarm_Minutes==minutes && alarm_Hours ==hours){
+				alarm();
+			}
 		}
 	}
 }
